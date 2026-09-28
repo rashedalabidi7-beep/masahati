@@ -73,6 +73,19 @@ nav button.on{color:var(--ac)}
 .sr{width:100%;margin-bottom:12px}
 #login{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;text-align:center}
 .lc{max-width:360px}.lg{font-size:56px}.g{background:#fff;color:#111;width:100%;margin-top:8px}
+body{overflow-x:hidden}
+.li>*{min-width:0}
+.li>span{overflow-wrap:anywhere}
+#main .seg+*{margin-top:0}
+:root{--nb:rgba(28,28,30,.72)}
+:root[data-theme=light]{color-scheme:light;--bg:#f2f2f7;--card:#fff;--fill:#f2f2f7;--ln:#e5e5ea;--tx:#000;--mu:#6c6c70;--nb:rgba(255,255,255,.75)}
+nav{background:var(--nb)}
+[data-theme=light] .g{border:1px solid var(--ln)}
+.seg{display:flex;background:var(--fill);border-radius:10px;padding:2px}
+.seg button{flex:1;border:0;background:none;color:var(--tx);padding:8px;border-radius:8px;font:inherit;cursor:pointer;transition:background .2s}
+.seg button.on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.3);font-weight:600}
+.alt{background:var(--fill);color:var(--tx)}.danger{background:var(--rd);margin-top:4px}
+label.btn{display:inline-block;text-align:center}
 </style>
 </head>
 <body>
@@ -91,7 +104,7 @@ const n=v=>Number(v)||0;
 const fm=v=>n(v).toLocaleString('en-US',{maximumFractionDigits:2})+(S.cur?' '+esc(S.cur):'');
 const day0=()=>new Date().toISOString().slice(0,10);
 const ago=k=>{const d=new Date();d.setDate(d.getDate()-k);return d.toISOString().slice(0,10)};
-const DAYS=['السبت','الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
+ const DAYS=['السبت','الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
 const inp=(nm,ph,t='text',x='')=>`<input name="${nm}" type="${t}" placeholder="${ph}" ${x}>`;
 const btn=(a,l,x='')=>`<button class="btn" data-act="${a}" ${x}>${l}</button>`;
 const del=(l,i)=>`<button class="x" data-act="del" data-l="${l}" data-id="${i}" aria-label="حذف">×</button>`;
@@ -122,8 +135,11 @@ const A={
  ask(f){return ask(f.q)},
  chip(_,e){return ask(e.dataset.q)},
  ft(f){focusStart(f.c)},
+ exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='masahati-backup-'+day0()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)},
+ rst(){if(confirm(T('سيتم حذف كل بياناتك نهائيًا. هل أنت متأكد؟')))S=JSON.parse(JSON.stringify(D))},
+ pref(_,e){PR[e.dataset.k]=e.dataset.val;try{localStorage.setItem(PK,JSON.stringify(PR))}catch(x){}if(e.dataset.k=='lang')location.reload();else applyPrefs()},
  out(){window.cloudOut&&window.cloudOut()},
- del(_,e){const l=S[e.dataset.l],i=l.findIndex(x=>x.id==e.dataset.id);if(i>-1)l.splice(i,1)}
+ del(_,e){if(['wallets','goals','notes','habits'].includes(e.dataset.l)&&!confirm(T('حذف هذا العنصر؟')))return;const l=S[e.dataset.l],i=l.findIndex(x=>x.id==e.dataset.id);if(i>-1)l.splice(i,1)}
 };
 
 function home(){
@@ -133,11 +149,11 @@ function home(){
  <div class="facts"><div><span>مصروف هذا الشهر</span><b>${fm(sp)}</b>${S.budget?`<small>من ميزانية ${fm(S.budget)}</small>`:''}</div>
  <div><span>مهام مفتوحة</span><b>${S.tasks.filter(t=>!t.done).length}</b></div>
  <div><span>عادات اليوم</span><b>${S.habits.filter(h=>h.log[day0()]).length}/${S.habits.length}</b></div></div>`+
- sec('دروس اليوم ('+dn+')',ls.length?ls.map(l=>`<div class="li"><span>${esc(l.c)}</span><span class="mu">${esc(l.t)}</span></div>`).join(''):emp('لا دروس اليوم. أضفها من قسم الدراسة.'))+(window.U?sec('الحساب',`<div class="li"><span>${esc(window.U.email)}</span><button class="btn" data-act="out">تسجيل الخروج</button></div>`):'');
+ sec('دروس اليوم ('+dn+')',ls.length?ls.map(l=>`<div class="li"><span>${esc(l.c)}</span><span class="mu">${esc(l.t)}</span></div>`).join(''):emp('لا دروس اليوم. أضفها من قسم الدراسة.'));
 }
 function study(){
  const g=S.grades,avg=g.length?g.reduce((a,x)=>a+x.s/x.m*100,0)/g.length:0;
- return sec('جدول الأسبوع',`<div class="f row"><select name="d">${DAYS.map(d=>`<option>${d}</option>`).join('')}</select>${inp('t','','time')}${inp('c','المادة')}${btn('lesson','إضافة')}</div>`+
+ return sec('جدول الأسبوع',`<div class="f row"><select name="d">${DAYS.map(d=>`<option value="${d}">${d}</option>`).join('')}</select>${inp('t','','time')}${inp('c','المادة')}${btn('lesson','إضافة')}</div>`+
   (S.lessons.length?DAYS.map(d=>{const l=S.lessons.filter(x=>x.d==d).sort((a,b)=>a.t>b.t?1:-1);return l.length?`<h3>${d}</h3>`+l.map(x=>`<div class="li"><span>${esc(x.c)}</span><span class="mu">${esc(x.t)}</span>${del('lessons',x.id)}</div>`).join(''):''}).join(''):emp('لم تضف دروسًا بعد.')))+
  examSec()+focusSec()+sec('المهام',`<div class="f row">${inp('t','مهمة جديدة')}${inp('due','','date')}${btn('task','إضافة')}</div>`+
   (S.tasks.length?[...S.tasks].sort((a,b)=>a.done-b.done).map(t=>`<div class="li ${t.done?'dn':''}"><button class="ck" data-act="tt" data-id="${t.id}" aria-label="تبديل الإنجاز">${t.done?'✓':''}</button><span>${esc(t.t)}</span><span class="mu">${esc(t.due)}</span>${del('tasks',t.id)}</div>`).join(''):emp('لا مهام حاليًا.')))+
@@ -166,8 +182,8 @@ function catChart(){
  S.tx.filter(t=>t.k=='out'&&t.d.slice(0,7)==m).forEach(t=>{const c=t.c||'أخرى';by[c]=(by[c]||0)+t.a});
  const cs=Object.entries(by).sort((a,b)=>b[1]-a[1]),top=Math.max(1,...cs.map(x=>x[1]));
  return `<div class="f row">${inp('c','التصنيف')}${inp('l','سقف شهري','number')}${btn('cb','حفظ السقف')}</div>`+(cs.length?cs.map(([c,v])=>{const l=S.cb[c];return `<div class="cat"><div class="li"><span>${esc(c)}</span><span class="${l&&v>=l?'out':'mu'}">${fm(v)}${l?' / '+fm(l):''}</span></div>${bar(v,l||top)}${l&&v>=l*.8?`<small class="out">${v>=l?'تجاوزت':'اقتربت من'} سقف ${esc(c)}</small>`:''}</div>`}).join(''):emp('سجّل مصاريف لتظهر هنا.'));
-}
-function examSec(){
+ }
+ function examSec(){
  const L=[...S.exams].sort((a,b)=>a.d>b.d?1:-1);
  return sec('الاختبارات والتسليمات',`<div class="f row">${inp('c','المادة')}${inp('d','','date')}${btn('exam','إضافة')}</div>`+(L.length?L.map(x=>{const k=Math.ceil((new Date(x.d)-new Date(day0()))/864e5);return `<div class="li"><span>${esc(x.c)}</span><b class="${k<=3?'out':'mu'}">${k<0?'مضى':k==0?'اليوم':k+' يوم'}</b>${del('exams',x.id)}</div>`}).join(''):emp('لا اختبارات قادمة.')));
 }
@@ -205,12 +221,145 @@ function ai(){
  return `<h1>المساعد</h1>`+(SM?`<div class="chat">${CH.length?CH.map(x=>`<div class="b ${x.r}">${esc(x.t)}</div>`).join(''):'<p class="mu">اسألني عن مصاريفك أو دراستك أو عاداتك، وسأجيب من بياناتك.</p>'}${busy?'<div class="b a mu">يفكر...</div>':''}</div><div class="chips">${chips.map(c=>`<button class="chip" data-act="chip" data-q="${c}">${c}</button>`).join('')}</div><div class="f row">${inp('q','اكتب سؤالك')}${btn('ask','إرسال')}</div>`:emp('المساعد غير متاح في هذا العرض. افتح الصفحة من رابطها في Claude.'));
 }
 document.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.name=='q'){e.preventDefault();e.target.closest('.f').querySelector('[data-act]').click()}});
-document.addEventListener('input',e=>{if(e.target.id=='nq'){NQ=e.target.value;$('#nl').innerHTML=noteList()}});
-const VS={home:['الرئيسية',home,'🏠'],study:['الدراسة',study,'📚'],money:['المال',money,'💳'],habits:['العادات',habits,'✅'],notes:['الملاحظات',notes,'📝']};
+document.addEventListener('input',e=>{if(e.target.id=='nq'){NQ=e.target.value;$('#nl').innerHTML=noteList();applyLang($('#nl'))}});
+
+const EN=`الرئيسية|Home
+الدراسة|Study
+المال|Money
+العادات|Habits
+الملاحظات|Notes
+الإعدادات|Settings
+أهلًا بك|Welcome
+إجمالي رصيدك في كل المحافظ|Total balance across all wallets
+مصروف هذا الشهر|Spent this month
+مهام مفتوحة|Open tasks
+عادات اليوم|Today's habits
+لا دروس اليوم. أضفها من قسم الدراسة.|No classes today. Add them in Study.
+تسجيل الخروج|Sign out
+جدول الأسبوع|Weekly schedule
+المادة|Subject
+إضافة|Add
+لم تضف دروسًا بعد.|No classes added yet.
+السبت|Saturday
+الأحد|Sunday
+الاثنين|Monday
+الثلاثاء|Tuesday
+الأربعاء|Wednesday
+الخميس|Thursday
+الجمعة|Friday
+الاختبارات والتسليمات|Exams & deadlines
+لا اختبارات قادمة.|No upcoming exams.
+مضى|Past
+اليوم|Today
+مؤقت التركيز|Focus timer
+ابدأ 25 دقيقة|Start 25 min
+إيقاف|Stop
+آخر 7 أيام|Last 7 days
+المهام|Tasks
+مهمة جديدة|New task
+لا مهام حاليًا.|No tasks right now.
+الدرجات|Grades
+المادة أو الاختبار|Subject or exam
+درجتك|Your score
+من|Out of
+لم تسجل درجات بعد.|No grades yet.
+حذف|Delete
+تبديل الإنجاز|Toggle done
+تثبيت|Pin
+الميزانية الشهرية|Monthly budget
+العملة|Currency
+ميزانية الشهر|Month budget
+حفظ|Save
+المصاريف حسب التصنيف|Spending by category
+التصنيف|Category
+سقف شهري|Monthly limit
+حفظ السقف|Save limit
+سجّل مصاريف لتظهر هنا.|Log expenses to see them here.
+أخرى|Other
+المحافظ|Wallets
+اسم المحفظة|Wallet name
+الرصيد الحالي|Current balance
+أضف محفظتك الأولى: نقدًا، بنك، ادخار...|Add your first wallet: cash, bank, savings...
+مناقلة بين المحافظ|Transfer between wallets
+المبلغ|Amount
+نقل|Transfer
+تسجيل حركة|Log a transaction
+مصروف|Expense
+دخل|Income
+تسجيل|Log
+أهداف الادخار|Savings goals
+اسم الهدف|Goal name
+المبلغ المطلوب|Target amount
+مبلغ يضاف|Amount to add
+ادخار|Save up
+آخر الحركات|Recent transactions
+لا حركات مسجلة.|No transactions yet.
+محفظة محذوفة|Deleted wallet
+عادة جديدة، مثل: قراءة 20 دقيقة|New habit, e.g. read 20 minutes
+آخر 7 أيام، واليوم أقصى اليمين.|Last 7 days, today first.
+ابدأ بعادة واحدة صغيرة.|Start with one small habit.
+العنوان|Title
+اكتب هنا|Write here
+حفظ الملاحظة|Save note
+ابحث في ملاحظاتك|Search your notes
+لا نتائج.|No results.
+لا ملاحظات بعد.|No notes yet.
+مساحتي|My Space
+سجّل الدخول لتُحفظ بياناتك وتصل إليها من أي جهاز.|Sign in to save your data and reach it from any device.
+تسجيل الدخول بحساب Google|Sign in with Google
+تعذر تسجيل الدخول. حاول مرة أخرى.|Sign-in failed. Please try again.
+تعذر قراءة بياناتك. تأكد من نشر قواعد Firestore.|Could not read your data. Make sure the Firestore rules are published.
+تعذر الاتصال بالخدمة. تحقق من الإنترنت.|Could not reach the service. Check your connection.
+الحساب|Account
+المظهر|Appearance
+اللغة|Language
+البيانات|Data
+تلقائي|Auto
+نهاري|Light
+ليلي|Dark
+تصدير نسخة احتياطية|Export backup
+استيراد نسخة|Import backup
+حذف كل بياناتي|Delete all my data
+وضع محلي: بياناتك محفوظة على هذا الجهاز فقط.|Local mode: your data is stored on this device only.
+تمت المزامنة|Synced
+جارٍ الحفظ...|Saving...
+تعذر الحفظ، ستُعاد المحاولة عند التعديل التالي|Could not save; will retry on the next change
+سيتم حذف كل بياناتك نهائيًا. هل أنت متأكد؟|All your data will be deleted permanently. Are you sure?
+سيتم استبدال بياناتك الحالية بالنسخة المستوردة. متابعة؟|Your current data will be replaced by the imported backup. Continue?
+ملف غير صالح.|Invalid file.
+حذف هذا العنصر؟|Delete this item?`.split('\n').map(l=>l.split('|')),M=new Map(EN);
+const RX=[[/^أهلًا (.+)$/,'Hello $1'],[/^دروس اليوم \((.+)\)$/,"Today's classes ($1)"],[/^من ميزانية (.+)$/,'of a budget of $1'],[/^المعدل العام: (.+)$/,'Overall average: $1'],[/^صرفت (.+) من (.+)$/,'Spent $1 of $2'],[/^(\d+) يوم$/,'$1 days'],[/^(\d+) دقيقة$/,'$1 min'],[/^(\d+) يوم متتالٍ · (\d+)% خلال 30 يومًا$/,'$1-day streak · $2% over 30 days'],[/^(تجاوزت|اقتربت من) سقف (.+)$/,(m,a,c)=>(a=='تجاوزت'?'Over the ':'Close to the ')+c+' limit'],[/^نقل من (.+) إلى (.+)$/,'Transfer from $1 to $2']];
+ const PK='masahati-prefs';let PR={theme:'auto',lang:'ar'};
+try{Object.assign(PR,JSON.parse(localStorage.getItem(PK)||'{}'))}catch(e){}
+const mq=matchMedia('(prefers-color-scheme: light)');
+function applyPrefs(){const d=document.documentElement;d.lang=PR.lang;d.dir=PR.lang=='ar'?'rtl':'ltr';const th=PR.theme=='auto'?(mq.matches?'light':'dark'):PR.theme;d.dataset.theme=th;document.querySelector('meta[name=theme-color]').content=th=='light'?'#f2f2f7':'#000000'}
+mq.addEventListener('change',()=>{if(PR.theme=='auto')applyPrefs()});
+applyPrefs();
+function T(s){if(PR.lang!='en')return s;const k=s.trim();if(M.has(k))return s.replace(k,M.get(k));for(const [a,b] of RX)if(a.test(k))return s.replace(k,k.replace(a,b));return s}
+function applyLang(root){
+ if(PR.lang!='en'||!root)return;
+ const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;
+ while(n=w.nextNode()){if(n.parentElement.closest('.note,script,style'))continue;const v=T(n.nodeValue);if(v!==n.nodeValue)n.nodeValue=v}
+ root.querySelectorAll('[placeholder],[aria-label]').forEach(e=>['placeholder','aria-label'].forEach(a=>{if(e.hasAttribute(a))e.setAttribute(a,T(e.getAttribute(a)))}));
+}
+function settings(){
+ const u=window.U,seg=(k,o)=>`<div class="seg">${o.map(([v,l])=>`<button class="${PR[k]==v?'on':''}" data-act="pref" data-k="${k}" data-val="${v}">${l}</button>`).join('')}</div>`;
+ const sy={ok:'تمت المزامنة',busy:'جارٍ الحفظ...',err:'تعذر الحفظ، ستُعاد المحاولة عند التعديل التالي'}[window.SY||'ok'];
+ return `<h1>الإعدادات</h1>`+
+ sec('الحساب',u?`<div class="li col"><span>${esc(u.displayName||'')}<br><small class="mu">${esc(u.email)}</small></span><button class="btn" data-act="out">تسجيل الخروج</button></div><p class="mu">${sy}</p>`:emp('وضع محلي: بياناتك محفوظة على هذا الجهاز فقط.'))+
+ sec('المظهر',seg('theme',[['auto','تلقائي'],['light','نهاري'],['dark','ليلي']]))+
+ sec('اللغة',seg('lang',[['ar','العربية'],['en','English']]))+
+ sec('البيانات',`<div class="row"><button class="btn" data-act="exp">تصدير نسخة احتياطية</button><label class="btn alt">استيراد نسخة<input id="imp" type="file" accept=".json" hidden></label></div><button class="btn danger" data-act="rst">حذف كل بياناتي</button>`);
+}
+document.addEventListener('change',e=>{
+ if(e.target.id!='imp')return;const f=e.target.files[0];if(!f)return;
+ f.text().then(t=>{try{const o=JSON.parse(t);if(!o||!Array.isArray(o.wallets))throw 0;if(confirm(T('سيتم استبدال بياناتك الحالية بالنسخة المستوردة. متابعة؟'))){S={...D,...o};save();render()}}catch(x){alert(T('ملف غير صالح.'))}});
+});
+const VS={home:['الرئيسية',home,'🏠'],study:['الدراسة',study,'📚'],money:['المال',money,'💳'],habits:['العادات',habits,'✅'],notes:['الملاحظات',notes,'📝'],settings:['الإعدادات',settings,'⚙️']};
 let V='home';
 function render(){
  $('#nav').innerHTML=Object.entries(VS).map(([k,[l,,i]])=>`<button data-v="${k}" class="${k==V?'on':''}"><span class="ic">${i}</span>${l}</button>`).join('');
- $('#main').innerHTML=(V=='study'||V=='money'?`<h1>${VS[V][0]}</h1>`:'')+VS[V][1]();
+ $('#main').innerHTML=(V=='study'||V=='money'?`<h1>${VS[V][0]}</h1>`:'')+VS[V][1]();applyLang($('#main'));applyLang($('#nav'));document.title=T('مساحتي');
 }
 document.addEventListener('click',e=>{
  const b=e.target.closest('[data-act]');
@@ -223,7 +372,7 @@ document.addEventListener('click',e=>{
  if(v){V=v.dataset.v;render();const m=$('#main');m.classList.remove('sw');void m.offsetWidth;m.classList.add('sw');scrollTo({top:0})}
 });
 window.setS=d=>{S={...D,...d};render()};window.getS=()=>S;
-render();
+render();applyLang(document.getElementById('login'));
 </script>
 <script type="module">
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
@@ -235,21 +384,26 @@ const L=document.getElementById('login'),E=document.getElementById('lerr');
 if(firebaseConfig.apiKey.startsWith('YOUR')){L.remove()}
 else{
  const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
- let ref=null,t;
- window.cloudSave=d=>{if(!ref)return;clearTimeout(t);t=setTimeout(()=>setDoc(ref,{json:JSON.stringify(d),updated:serverTimestamp()}).catch(e=>console.error(e)),800)};
+ let ref=null,t=null,pend=null,R=0;
+ const w=()=>{if(!ref||!pend)return;const d=pend;pend=null;window.SY='busy';setDoc(ref,{json:JSON.stringify(d),updated:serverTimestamp()}).then(()=>window.SY='ok').catch(e=>{window.SY='err';console.error(e)})};
+ const fl=()=>{clearTimeout(t);w()};
+ addEventListener('pagehide',fl);document.addEventListener('visibilitychange',()=>{if(document.hidden)fl()});
+ window.cloudSave=d=>{if(!ref)return;pend=d;clearTimeout(t);t=setTimeout(w,800)};
  window.cloudOut=async()=>{await signOut(auth);try{localStorage.clear()}catch(e){}location.reload()};
  document.getElementById('gbtn').onclick=async()=>{
   const p=new GoogleAuthProvider();
   try{await signInWithPopup(auth,p)}
-  catch(e){if(e.code=='auth/popup-blocked'||e.code=='auth/operation-not-supported-in-this-environment')signInWithRedirect(auth,p);else E.textContent='تعذر تسجيل الدخول. حاول مرة أخرى.'}
+  catch(e){if(e.code=='auth/popup-blocked'||e.code=='auth/operation-not-supported-in-this-environment')signInWithRedirect(auth,p);else E.textContent=T('تعذر تسجيل الدخول. حاول مرة أخرى.')}
  };
  onAuthStateChanged(auth,async u=>{
+  R=1;
   if(!u){ref=null;window.U=null;L.style.display='flex';return}
-  window.U=u;ref=doc(db,'users',u.uid);
-  try{const s=await getDoc(ref);if(s.exists())window.setS(JSON.parse(s.data().json));else window.cloudSave(window.getS())}
-  catch(e){console.error(e);E.textContent='تعذر قراءة بياناتك. تأكد من نشر قواعد Firestore.';return}
+  window.U=u;
+  try{const r=doc(db,'users',u.uid),s=await getDoc(r);ref=r;if(s.exists())window.setS(JSON.parse(s.data().json));else window.cloudSave(window.getS())}
+  catch(e){console.error(e);E.textContent=T('تعذر قراءة بياناتك. تأكد من نشر قواعد Firestore.');return}
   L.style.display='none';render();
  });
+ setTimeout(()=>{if(!R)E.textContent=T('تعذر الاتصال بالخدمة. تحقق من الإنترنت.')},10000);
 }
 </script>
 </body>
