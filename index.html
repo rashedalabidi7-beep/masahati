@@ -86,10 +86,34 @@ nav{background:var(--nb)}
 .seg button.on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.3);font-weight:600}
 .alt{background:var(--fill);color:var(--tx)}.danger{background:var(--rd);margin-top:4px}
 label.btn{display:inline-block;text-align:center}
+main{padding-top:12px}
+#bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:4;display:flex;align-items:center;gap:8px;max-width:560px;margin:0 auto;padding:6px 12px;background:var(--nb);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border-bottom:.5px solid var(--ln)}
+#bar h2{flex:1;margin:0;font-size:19px;font-weight:600;text-align:center}
+.ib{background:none;border:0;color:var(--tx);width:40px;height:40px;border-radius:50%;cursor:pointer;display:grid;place-items:center;padding:0}
+.ib:active{background:var(--fill)}.ib img{width:32px;height:32px;border-radius:50%;object-fit:cover}
+.ic{filter:none;line-height:0;font-size:0;display:block;margin-bottom:2px}.on .ic{transform:none}
+body.dro{overflow:hidden}
+#scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .25s;z-index:30}
+body.dro #scrim{opacity:1;pointer-events:auto}
+#drawer{position:fixed;top:0;bottom:0;inset-inline-start:0;width:min(84vw,340px);background:var(--card);z-index:31;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));overflow-y:auto;transform:translateX(100%);visibility:hidden;transition:transform .28s cubic-bezier(.2,.8,.2,1),visibility 0s .28s}
+[dir=ltr] #drawer{transform:translateX(-100%)}
+ body.dro #drawer{transform:none;visibility:visible;transition-delay:0s}
+#drawer hr{border:0;border-top:.5px solid var(--ln);margin:8px 0;width:100%}
+.dh{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:14px;padding:20px;cursor:pointer;width:100%}
+.av{width:64px;height:64px;border-radius:50%;background:var(--ac);color:#fff;display:grid;place-items:center;font-size:26px;font-weight:700;overflow:hidden;flex:none}
+.av img{width:100%;height:100%;object-fit:cover}
+.dn{flex:1;min-width:0}.dn b{display:block;font-size:20px;overflow-wrap:anywhere}.dn small{color:var(--mu);overflow-wrap:anywhere}
+.chev{color:var(--mu);line-height:0}[dir=rtl] .chev svg{transform:scaleX(-1)}
+.di{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:16px;padding:14px 20px;font-size:17px;font-weight:600;cursor:pointer;width:100%;color:var(--tx)}
+.di.on{color:var(--ac)}.di:active{background:var(--fill)}
+.di:focus-visible,.dh:focus-visible{outline:2px solid var(--am);outline-offset:-2px}
+.sp{flex:1}.df{display:flex;align-items:center;padding-inline-end:8px}.df .di{flex:1}
 </style>
 </head>
 <body>
 <div id="login"><div class="lc"><div class="lg">🌿</div><h1>مساحتي</h1><p class="mu">سجّل الدخول لتُحفظ بياناتك وتصل إليها من أي جهاز.</p><button id="gbtn" class="btn g">تسجيل الدخول بحساب Google</button><p id="lerr" class="out"></p></div></div>
+<header id="bar"><button class="ib" data-dr="open" aria-label="القائمة"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><h2>مساحتي</h2><button class="ib" id="bav" data-v="settings" aria-label="الإعدادات"></button></header>
+<div id="scrim" data-dr="close"></div><aside id="drawer" aria-hidden="true"></aside>
 <div class="app"><main id="main" class="sw"></main><nav id="nav"></nav></div>
 <script>
 const K='masahati-v1';
@@ -104,7 +128,7 @@ const n=v=>Number(v)||0;
 const fm=v=>n(v).toLocaleString('en-US',{maximumFractionDigits:2})+(S.cur?' '+esc(S.cur):'');
 const day0=()=>new Date().toISOString().slice(0,10);
 const ago=k=>{const d=new Date();d.setDate(d.getDate()-k);return d.toISOString().slice(0,10)};
- const DAYS=['السبت','الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
+const DAYS=['السبت','الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة'];
 const inp=(nm,ph,t='text',x='')=>`<input name="${nm}" type="${t}" placeholder="${ph}" ${x}>`;
 const btn=(a,l,x='')=>`<button class="btn" data-act="${a}" ${x}>${l}</button>`;
 const del=(l,i)=>`<button class="x" data-act="del" data-l="${l}" data-id="${i}" aria-label="حذف">×</button>`;
@@ -224,6 +248,8 @@ document.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.name=='q'){e
 document.addEventListener('input',e=>{if(e.target.id=='nq'){NQ=e.target.value;$('#nl').innerHTML=noteList();applyLang($('#nl'))}});
 
 const EN=`الرئيسية|Home
+القائمة|Menu
+تغيير المظهر|Toggle theme
 الدراسة|Study
 المال|Money
 العادات|Habits
@@ -318,6 +344,7 @@ const EN=`الرئيسية|Home
 نهاري|Light
 ليلي|Dark
 تصدير نسخة احتياطية|Export backup
+backup
 استيراد نسخة|Import backup
 حذف كل بياناتي|Delete all my data
 وضع محلي: بياناتك محفوظة على هذا الجهاز فقط.|Local mode: your data is stored on this device only.
@@ -329,7 +356,7 @@ const EN=`الرئيسية|Home
 ملف غير صالح.|Invalid file.
 حذف هذا العنصر؟|Delete this item?`.split('\n').map(l=>l.split('|')),M=new Map(EN);
 const RX=[[/^أهلًا (.+)$/,'Hello $1'],[/^دروس اليوم \((.+)\)$/,"Today's classes ($1)"],[/^من ميزانية (.+)$/,'of a budget of $1'],[/^المعدل العام: (.+)$/,'Overall average: $1'],[/^صرفت (.+) من (.+)$/,'Spent $1 of $2'],[/^(\d+) يوم$/,'$1 days'],[/^(\d+) دقيقة$/,'$1 min'],[/^(\d+) يوم متتالٍ · (\d+)% خلال 30 يومًا$/,'$1-day streak · $2% over 30 days'],[/^(تجاوزت|اقتربت من) سقف (.+)$/,(m,a,c)=>(a=='تجاوزت'?'Over the ':'Close to the ')+c+' limit'],[/^نقل من (.+) إلى (.+)$/,'Transfer from $1 to $2']];
- const PK='masahati-prefs';let PR={theme:'auto',lang:'ar'};
+const PK='masahati-prefs';let PR={theme:'auto',lang:'ar'};
 try{Object.assign(PR,JSON.parse(localStorage.getItem(PK)||'{}'))}catch(e){}
 const mq=matchMedia('(prefers-color-scheme: light)');
 function applyPrefs(){const d=document.documentElement;d.lang=PR.lang;d.dir=PR.lang=='ar'?'rtl':'ltr';const th=PR.theme=='auto'?(mq.matches?'light':'dark'):PR.theme;d.dataset.theme=th;document.querySelector('meta[name=theme-color]').content=th=='light'?'#f2f2f7':'#000000'}
@@ -355,11 +382,28 @@ document.addEventListener('change',e=>{
  if(e.target.id!='imp')return;const f=e.target.files[0];if(!f)return;
  f.text().then(t=>{try{const o=JSON.parse(t);if(!o||!Array.isArray(o.wallets))throw 0;if(confirm(T('سيتم استبدال بياناتك الحالية بالنسخة المستوردة. متابعة؟'))){S={...D,...o};save();render()}}catch(x){alert(T('ملف غير صالح.'))}});
 });
-const VS={home:['الرئيسية',home,'🏠'],study:['الدراسة',study,'📚'],money:['المال',money,'💳'],habits:['العادات',habits,'✅'],notes:['الملاحظات',notes,'📝'],settings:['الإعدادات',settings,'⚙️']};
+
+const IC={menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',home:'<path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/>',study:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19a2 2 0 0 0 2 2h13"/>',money:'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/>',habits:'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',notes:'<path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h7"/>',chev:'<path d="M9 6l6 6-6 6"/>',moon:'<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'};
+const ic=(k,z=24)=>`<svg viewBox="0 0 24 24" width="${z}" height="${z}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]}</svg>`;
+function drawerHtml(){
+ const u=window.U,nm=u?(u.displayName||u.email):'مساحتي',av=u&&u.photoURL?`<img src="${esc(u.photoURL)}" alt="" referrerpolicy="no-referrer">`:`<span>${esc((nm||'؟')[0].toUpperCase())}</span>`;
+ const it=(k,l)=>`<button class="di ${k==V?'on':''}" data-v="${k}">${ic(k)}<span>${l}</span></button>`;
+ return `<button class="dh" data-v="settings"><div class="av">${av}</div><div class="dn"><b>${esc(nm)}</b>${u?`<small>${esc(u.email)}</small>`:''}</div><span class="chev">${ic('chev',20)}</span></button><hr>`+['home','study','money','habits','notes'].map(k=>it(k,VS[k][0])).join('')+`<div class="sp"></div><hr><div class="df">${it('settings',VS.settings[0])}<button class="ib" data-dr="theme" aria-label="تغيير المظهر">${ic(document.documentElement.dataset.theme=='light'?'moon':'sun')}</button></div>`;
+}
+const barAv=()=>window.U&&window.U.photoURL?`<img src="${esc(window.U.photoURL)}" alt="" referrerpolicy="no-referrer">`:ic('settings');
+const openDr=()=>{document.body.classList.add('dro');$('#drawer').setAttribute('aria-hidden','false')};
+const closeDr=()=>{document.body.classList.remove('dro');$('#drawer').setAttribute('aria-hidden','true')};
+document.addEventListener('click',e=>{
+ const d=e.target.closest('[data-dr]');if(!d)return;const a=d.dataset.dr;
+ if(a=='open')openDr();else if(a=='close')closeDr();
+ else if(a=='theme'){PR.theme=document.documentElement.dataset.theme=='light'?'dark':'light';try{localStorage.setItem(PK,JSON.stringify(PR))}catch(x){}applyPrefs();$('#drawer').innerHTML=drawerHtml();applyLang($('#drawer'));if(V=='settings')render()}
+});
+document.addEventListener('keydown',e=>{if(e.key=='Escape')closeDr()});
+const VS={home:['الرئيسية',home,'home'],study:['الدراسة',study,'study'],money:['المال',money,'money'],habits:['العادات',habits,'habits'],notes:['الملاحظات',notes,'notes'],settings:['الإعدادات',settings,'settings']};
 let V='home';
 function render(){
- $('#nav').innerHTML=Object.entries(VS).map(([k,[l,,i]])=>`<button data-v="${k}" class="${k==V?'on':''}"><span class="ic">${i}</span>${l}</button>`).join('');
- $('#main').innerHTML=(V=='study'||V=='money'?`<h1>${VS[V][0]}</h1>`:'')+VS[V][1]();applyLang($('#main'));applyLang($('#nav'));document.title=T('مساحتي');
+ $('#nav').innerHTML=Object.entries(VS).filter(([k])=>k!='settings').map(([k,[l,,i]])=>`<button data-v="${k}" class="${k==V?'on':''}"><span class="ic">${ic(i)}</span>${l}</button>`).join('');
+ $('#main').innerHTML=(V=='study'||V=='money'?`<h1>${VS[V][0]}</h1>`:'')+VS[V][1]();applyLang($('#main'));applyLang($('#nav'));$('#drawer').innerHTML=drawerHtml();$('#bav').innerHTML=barAv();applyLang($('#drawer'));document.title=T('مساحتي');
 }
 document.addEventListener('click',e=>{
  const b=e.target.closest('[data-act]');
@@ -369,10 +413,10 @@ document.addEventListener('click',e=>{
   A[b.dataset.act](f,b);save();render();return;
  }
  const v=e.target.closest('[data-v]');
- if(v){V=v.dataset.v;render();const m=$('#main');m.classList.remove('sw');void m.offsetWidth;m.classList.add('sw');scrollTo({top:0})}
+ if(v){V=v.dataset.v;closeDr();render();const m=$('#main');m.classList.remove('sw');void m.offsetWidth;m.classList.add('sw');scrollTo({top:0})}
 });
 window.setS=d=>{S={...D,...d};render()};window.getS=()=>S;
-render();applyLang(document.getElementById('login'));
+render();applyLang(document.getElementById('login'));applyLang($('#bar'));
 </script>
 <script type="module">
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
