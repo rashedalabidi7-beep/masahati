@@ -97,7 +97,7 @@ body.dro{overflow:hidden}
 body.dro #scrim{opacity:1;pointer-events:auto}
 #drawer{position:fixed;top:0;bottom:0;inset-inline-start:0;width:min(84vw,340px);background:var(--card);z-index:31;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));overflow-y:auto;transform:translateX(100%);visibility:hidden;transition:transform .28s cubic-bezier(.2,.8,.2,1),visibility 0s .28s}
 [dir=ltr] #drawer{transform:translateX(-100%)}
- body.dro #drawer{transform:none;visibility:visible;transition-delay:0s}
+body.dro #drawer{transform:none;visibility:visible;transition-delay:0s}
 #drawer hr{border:0;border-top:.5px solid var(--ln);margin:8px 0;width:100%}
 .dh{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:14px;padding:20px;cursor:pointer;width:100%}
 .av{width:64px;height:64px;border-radius:50%;background:var(--ac);color:#fff;display:grid;place-items:center;font-size:26px;font-weight:700;overflow:hidden;flex:none}
@@ -108,7 +108,8 @@ body.dro #scrim{opacity:1;pointer-events:auto}
 .di.on{color:var(--ac)}.di:active{background:var(--fill)}
 .di:focus-visible,.dh:focus-visible{outline:2px solid var(--am);outline-offset:-2px}
 .sp{flex:1}.df{display:flex;align-items:center;padding-inline-end:8px}.df .di{flex:1}
-</style>
+.ch{width:100%;height:auto;display:block}.tg{color:var(--ac);font-size:13px}
+ </style>
 </head>
 <body>
 <div id="login"><div class="lc"><div class="lg">🌿</div><h1>مساحتي</h1><p class="mu">سجّل الدخول لتُحفظ بياناتك وتصل إليها من أي جهاز.</p><button id="gbtn" class="btn g">تسجيل الدخول بحساب Google</button><p id="lerr" class="out"></p></div></div>
@@ -117,7 +118,7 @@ body.dro #scrim{opacity:1;pointer-events:auto}
 <div class="app"><main id="main" class="sw"></main><nav id="nav"></nav></div>
 <script>
 const K='masahati-v1';
-const D={cur:'',lessons:[],tasks:[],grades:[],wallets:[],tx:[],budget:0,goals:[],habits:[],notes:[],exams:[],focus:[],cb:{}};
+const D={cur:'',lessons:[],tasks:[],grades:[],wallets:[],tx:[],budget:0,goals:[],habits:[],notes:[],exams:[],focus:[],cb:{},rec:[],debts:[]};
 let S={...D};
 try{const r=localStorage.getItem(K);if(r)S={...D,...JSON.parse(r)}}catch(e){}
 const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}window.cloudSave&&window.cloudSave(S)};
@@ -143,16 +144,16 @@ const A={
  lesson(f){if(f.c)S.lessons.push({id:id(),d:f.d,t:f.t,c:f.c})},
  task(f){if(f.t)S.tasks.push({id:id(),t:f.t,due:f.due,done:false})},
  tt(_,e){const t=S.tasks.find(x=>x.id==e.dataset.id);t.done=!t.done},
- grade(f){if(f.c&&n(f.max))S.grades.push({id:id(),c:f.c,s:n(f.s),m:n(f.max)})},
+ grade(f){if(f.c&&n(f.max))S.grades.push({id:id(),c:f.c,s:n(f.s),m:n(f.max),w:n(f.w)||1})},
  wallet(f){if(f.n)S.wallets.push({id:id(),n:f.n,b:n(f.b)})},
  tx(f){const w=S.wallets.find(x=>x.id==f.w),a=n(f.a);if(!w||a<=0)return;w.b+=f.k=='out'?-a:a;S.tx.unshift({id:id(),d:day0(),w:w.id,k:f.k,a,c:f.c})},
  tr(f){const a=n(f.a),x=S.wallets.find(w=>w.id==f.from),y=S.wallets.find(w=>w.id==f.to);if(!x||!y||x==y||a<=0)return;x.b-=a;y.b+=a;S.tx.unshift({id:id(),d:day0(),w:x.id,to:y.id,k:'tr',a})},
  budget(f){S.budget=n(f.b);S.cur=f.cur||''},
  goal(f){if(f.n&&n(f.t))S.goals.push({id:id(),n:f.n,t:n(f.t),s:0})},
  gadd(f,e){const g=S.goals.find(x=>x.id==e.dataset.id);g.s+=n(f.a)},
- habit(f){if(f.n)S.habits.push({id:id(),n:f.n,log:{}})},
+ habit(f){if(f.n)S.habits.push({id:id(),n:f.n,log:{},g:Math.min(7,n(f.g))})},
  ht(_,e){const h=S.habits.find(x=>x.id==e.dataset.id),k=e.dataset.d;h.log[k]?delete h.log[k]:h.log[k]=1},
- note(f){if(f.t||f.b)S.notes.unshift({id:id(),t:f.t||'بدون عنوان',b:f.b,d:day0()})},
+ note(f){if(f.t||f.b)S.notes.unshift({id:id(),t:f.t||'بدون عنوان',b:f.b,g:f.g,d:day0()})},
  exam(f){if(f.c&&f.d)S.exams.push({id:id(),c:f.c,d:f.d})},
  cb(f){if(f.c)S.cb[f.c]=n(f.l)},
  pin(_,e){const x=S.notes.find(y=>y.id==e.dataset.id);x.p=!x.p},
@@ -162,6 +163,12 @@ const A={
  exp(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='masahati-backup-'+day0()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)},
  rst(){if(confirm(T('سيتم حذف كل بياناتك نهائيًا. هل أنت متأكد؟')))S=JSON.parse(JSON.stringify(D))},
  pref(_,e){PR[e.dataset.k]=e.dataset.val;try{localStorage.setItem(PK,JSON.stringify(PR))}catch(x){}if(e.dataset.k=='lang')location.reload();else applyPrefs()},
+ rec(f){const w=S.wallets.find(x=>x.id==f.w),a=n(f.a),d=Math.min(28,Math.max(1,n(f.d)||1));if(!w||a<=0)return;S.rec.push({id:id(),w:w.id,k:f.k,a,c:f.c,d,last:''});applyRec()},
+ debt(f){if(f.who&&n(f.a)>0)S.debts.push({id:id(),who:f.who,a:n(f.a),dir:f.dir,note:f.note,paid:false})},
+ dp(_,e){const x=S.debts.find(y=>y.id==e.dataset.id);x.paid=!x.paid},
+ dtx(_,e){const i=S.tx.findIndex(t=>t.id==e.dataset.id);if(i<0||!confirm(T('حذف الحركة وإرجاع أثرها على الرصيد؟')))return;const t=S.tx[i],w=S.wallets.find(x=>x.id==t.w),y=S.wallets.find(x=>x.id==t.to);if(t.k=='tr'){if(w)w.b+=t.a;if(y)y.b-=t.a}else if(w)w.b+=t.k=='out'?t.a:-t.a;S.tx.splice(i,1)},
+ etx(_,e){const t=S.tx.find(x=>x.id==e.dataset.id),w=S.wallets.find(x=>x.id==t.w),v=prompt(T('المبلغ الجديد'),t.a);if(v===null||n(v)<=0)return;const a=n(v);if(t.k=='tr'){const y=S.wallets.find(x=>x.id==t.to);if(w)w.b+=t.a-a;if(y)y.b+=a-t.a}else{const c=prompt(T('التصنيف'),t.c||'');if(w)w.b+=(t.k=='out'?-1:1)*(a-t.a);if(c!==null)t.c=c}t.a=a},
+ more(){TXN+=20},
  out(){window.cloudOut&&window.cloudOut()},
  del(_,e){if(['wallets','goals','notes','habits'].includes(e.dataset.l)&&!confirm(T('حذف هذا العنصر؟')))return;const l=S[e.dataset.l],i=l.findIndex(x=>x.id==e.dataset.id);if(i>-1)l.splice(i,1)}
 };
@@ -176,12 +183,12 @@ function home(){
  sec('دروس اليوم ('+dn+')',ls.length?ls.map(l=>`<div class="li"><span>${esc(l.c)}</span><span class="mu">${esc(l.t)}</span></div>`).join(''):emp('لا دروس اليوم. أضفها من قسم الدراسة.'));
 }
 function study(){
- const g=S.grades,avg=g.length?g.reduce((a,x)=>a+x.s/x.m*100,0)/g.length:0;
+ const g=S.grades,tw=g.reduce((a,x)=>a+(x.w||1),0),avg=g.length?g.reduce((a,x)=>a+x.s/x.m*100*(x.w||1),0)/tw:0;
  return sec('جدول الأسبوع',`<div class="f row"><select name="d">${DAYS.map(d=>`<option value="${d}">${d}</option>`).join('')}</select>${inp('t','','time')}${inp('c','المادة')}${btn('lesson','إضافة')}</div>`+
   (S.lessons.length?DAYS.map(d=>{const l=S.lessons.filter(x=>x.d==d).sort((a,b)=>a.t>b.t?1:-1);return l.length?`<h3>${d}</h3>`+l.map(x=>`<div class="li"><span>${esc(x.c)}</span><span class="mu">${esc(x.t)}</span>${del('lessons',x.id)}</div>`).join(''):''}).join(''):emp('لم تضف دروسًا بعد.')))+
  examSec()+focusSec()+sec('المهام',`<div class="f row">${inp('t','مهمة جديدة')}${inp('due','','date')}${btn('task','إضافة')}</div>`+
   (S.tasks.length?[...S.tasks].sort((a,b)=>a.done-b.done).map(t=>`<div class="li ${t.done?'dn':''}"><button class="ck" data-act="tt" data-id="${t.id}" aria-label="تبديل الإنجاز">${t.done?'✓':''}</button><span>${esc(t.t)}</span><span class="mu">${esc(t.due)}</span>${del('tasks',t.id)}</div>`).join(''):emp('لا مهام حاليًا.')))+
- sec('الدرجات',`<div class="f row">${inp('c','المادة أو الاختبار')}${inp('s','درجتك','number')}${inp('max','من','number')}${btn('grade','إضافة')}</div>`+
+ sec('الدرجات',`<div class="f row">${inp('c','المادة أو الاختبار')}${inp('s','درجتك','number')}${inp('max','من','number')}${inp('w','الوزن (اختياري)','number')}${btn('grade','إضافة')}</div>`+
   (g.length?`<p class="mu">المعدل العام: ${avg.toFixed(1)}%</p>`+g.map(x=>`<div class="li"><span>${esc(x.c)}</span><span class="mu">${x.s}/${x.m}</span><b>${(x.s/x.m*100).toFixed(0)}%</b>${del('grades',x.id)}</div>`).join(''):emp('لم تسجل درجات بعد.')));
 }
 function money(){
@@ -192,12 +199,11 @@ function money(){
   sec('تسجيل حركة',`<div class="f row"><select name="w">${ops()}</select><select name="k"><option value="out">مصروف</option><option value="in">دخل</option></select>${inp('a','المبلغ','number')}${inp('c','التصنيف')}${btn('tx','تسجيل')}</div>`):'')+
  sec('أهداف الادخار',`<div class="f row">${inp('n','اسم الهدف')}${inp('t','المبلغ المطلوب','number')}${btn('goal','إضافة')}</div>`+
   S.goals.map(g=>`<div class="li col f"><span>${esc(g.n)}</span><span class="mu">${fm(g.s)} / ${fm(g.t)}</span>${del('goals',g.id)}${bar(g.s,g.t)}${inp('a','مبلغ يضاف','number')}${btn('gadd','ادخار','data-id="'+g.id+'"')}</div>`).join(''))+
- sec('آخر الحركات',S.tx.length?S.tx.slice(0,10).map(t=>t.k=='tr'?`<div class="li"><span>نقل من ${esc(wn(t.w))} إلى ${esc(wn(t.to))}</span><span class="mu">${t.d}</span><b>${fm(t.a)}</b></div>`:`<div class="li"><span>${esc(t.c||(t.k=='in'?'دخل':'مصروف'))} <small class="mu">${esc(wn(t.w))}</small></span><span class="mu">${t.d}</span><b class="${t.k}">${t.k=='in'?'+':'−'}${fm(t.a)}</b></div>`).join(''):emp('لا حركات مسجلة.'));
-}
-function habits(){
+ chartSec()+txList()+recSec()+debtSec();
+ function habits(){
  const ds=[0,1,2,3,4,5,6].map(ago),st=h=>{let c=0,k=h.log[ago(0)]?0:1;while(h.log[ago(k)]){c++;k++}return c};
- return `<h1>العادات</h1><div class="f row">${inp('n','عادة جديدة، مثل: قراءة 20 دقيقة')}${btn('habit','إضافة')}</div><p class="mu">آخر 7 أيام، واليوم أقصى اليمين.</p>`+
- (S.habits.length?S.habits.map(h=>`<div class="li"><span>${esc(h.n)}<br><small class="mu">${st(h)} يوم متتالٍ · ${Math.round(hdays(h)/30*100)}% خلال 30 يومًا</small></span><div class="dots">${ds.map(d=>`<button class="dot ${h.log[d]?'on':''}" data-act="ht" data-id="${h.id}" data-d="${d}" title="${d}"></button>`).join('')}</div>${del('habits',h.id)}</div>`).join(''):emp('ابدأ بعادة واحدة صغيرة.'));
+ return `<h1>العادات</h1><div class="f row">${inp('n','عادة جديدة، مثل: قراءة 20 دقيقة')}${inp('g','هدف أسبوعي (أيام)','number')}${btn('habit','إضافة')}</div><p class="mu">آخر 7 أيام، واليوم أقصى اليمين.</p>`+
+ (S.habits.length?S.habits.map(h=>`<div class="li"><span>${esc(h.n)}<br><small class="mu">${st(h)} يوم متتالٍ · ${Math.round(hdays(h)/30*100)}% خلال 30 يومًا</small>${h.g?`<br><small class="mu">هذا الأسبوع: ${[0,1,2,3,4,5,6].filter(k=>h.log[ago(k)]).length}/${h.g}</small>`:''}</span><div class="dots">${ds.map(d=>`<button class="dot ${h.log[d]?'on':''}" data-act="ht" data-id="${h.id}" data-d="${d}" title="${d}"></button>`).join('')}</div>${del('habits',h.id)}</div>`).join(''):emp('ابدأ بعادة واحدة صغيرة.'));
 }
 
 const hdays=h=>[...Array(30).keys()].filter(k=>h.log[ago(k)]).length;
@@ -206,8 +212,8 @@ function catChart(){
  S.tx.filter(t=>t.k=='out'&&t.d.slice(0,7)==m).forEach(t=>{const c=t.c||'أخرى';by[c]=(by[c]||0)+t.a});
  const cs=Object.entries(by).sort((a,b)=>b[1]-a[1]),top=Math.max(1,...cs.map(x=>x[1]));
  return `<div class="f row">${inp('c','التصنيف')}${inp('l','سقف شهري','number')}${btn('cb','حفظ السقف')}</div>`+(cs.length?cs.map(([c,v])=>{const l=S.cb[c];return `<div class="cat"><div class="li"><span>${esc(c)}</span><span class="${l&&v>=l?'out':'mu'}">${fm(v)}${l?' / '+fm(l):''}</span></div>${bar(v,l||top)}${l&&v>=l*.8?`<small class="out">${v>=l?'تجاوزت':'اقتربت من'} سقف ${esc(c)}</small>`:''}</div>`}).join(''):emp('سجّل مصاريف لتظهر هنا.'));
- }
- function examSec(){
+}
+function examSec(){
  const L=[...S.exams].sort((a,b)=>a.d>b.d?1:-1);
  return sec('الاختبارات والتسليمات',`<div class="f row">${inp('c','المادة')}${inp('d','','date')}${btn('exam','إضافة')}</div>`+(L.length?L.map(x=>{const k=Math.ceil((new Date(x.d)-new Date(day0()))/864e5);return `<div class="li"><span>${esc(x.c)}</span><b class="${k<=3?'out':'mu'}">${k<0?'مضى':k==0?'اليوم':k+' يوم'}</b>${del('exams',x.id)}</div>`}).join(''):emp('لا اختبارات قادمة.')));
 }
@@ -225,14 +231,16 @@ function focusSec(){
  return sec('مؤقت التركيز',`<div class="f row">${TM?'':inp('c','المادة')}<b id="tm" class="tm">${TM?mm(Math.max(0,Math.round((TM.end-Date.now())/1000))):'25:00'}</b>${btn('ft',TM?'إيقاف':'ابدأ 25 دقيقة')}</div>`+(Object.keys(by).length?`<h3>آخر 7 أيام</h3>`+Object.entries(by).map(([c,m])=>`<div class="li"><span>${esc(c)}</span><span class="mu">${m} دقيقة</span></div>`).join(''):''));
 }
 let NQ='';
-const noteList=()=>{const L=S.notes.filter(x=>((x.t||'')+' '+(x.b||'')).includes(NQ)).sort((a,b)=>(b.p?1:0)-(a.p?1:0));return L.length?L.map(x=>`<div class="note"><b>${x.p?'📌 ':''}${esc(x.t)}</b> <span class="mu">${x.d}</span><button class="x" data-act="pin" data-id="${x.id}" aria-label="تثبيت">📌</button>${del('notes',x.id)}<br>${esc(x.b)}</div>`).join(''):emp(S.notes.length?'لا نتائج.':'لا ملاحظات بعد.')};
-function notes(){return `<h1>الملاحظات</h1><div class="f row">${inp('t','العنوان')}<textarea name="b" placeholder="اكتب هنا"></textarea>${btn('note','حفظ الملاحظة')}</div>${S.notes.length?`<input id="nq" class="sr" placeholder="ابحث في ملاحظاتك" value="${esc(NQ)}">`:''}<div id="nl">${noteList()}</div>`}
+const noteList=()=>{const L=S.notes.filter(x=>((x.t||'')+' '+(x.b||'')+' '+(x.g||'')).includes(NQ)).sort((a,b)=>(b.p?1:0)-(a.p?1:0));return L.length?L.map(x=>`<div class="note"><b>${x.p?'📌 ':''}${esc(x.t)}</b> <span class="mu">${x.d}</span>${x.g?` <span class="tg">#${esc(x.g)}</span>`:''}<button class="x" data-act="pin" data-id="${x.id}" aria-label="تثبيت">📌</button>${del('notes',x.id)}<br>${esc(x.b)}</div>`).join(''):emp(S.notes.length?'لا نتائج.':'لا ملاحظات بعد.')};
+function notes(){return `<h1>الملاحظات</h1><div class="f row">${inp('t','العنوان')}${inp('g','وسم (اختياري)')}<textarea name="b" placeholder="اكتب هنا"></textarea>${btn('note','حفظ الملاحظة')}</div>${S.notes.length?`<input id="nq" class="sr" placeholder="ابحث في ملاحظاتك" value="${esc(NQ)}">`:''}<div id="nl">${noteList()}</div>`}
+const AI_URL='';/* رابط Webhook في n8n يستقبل {prompt} ويعيد {text} */
 let CH=[],busy=false,SM=null;
 try{window.claude&&claude.use('sample').then(x=>{SM=x;if(V=='ai')render()}).catch(()=>{})}catch(e){}
+if(AI_URL)SM=async p=>{const r=await fetch(AI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:p})});if(!r.ok)throw 0;const j=await r.json();return{text:j.text||j.output||''}};
 async function ask(q){
  if(!q||busy||!SM)return;
  CH.push({r:'u',t:q});busy=true;
- const ctx={العملة:S.cur,ميزانية_الشهر:S.budget,سقوف_التصنيفات:S.cb,المحافظ:S.wallets.map(w=>({n:w.n,b:w.b})),حركات_حديثة:S.tx.slice(0,40),دروس:S.lessons,مهام_مفتوحة:S.tasks.filter(t=>!t.done),اختبارات:S.exams,درجات:S.grades,مذاكرة:S.focus.slice(-40),عادات:S.habits.map(h=>({n:h.n,أيام_آخر_30:hdays(h)})),أهداف_ادخار:S.goals,اليوم:day0()};
+ const ctx={العملة:S.cur,ميزانية_الشهر:S.budget,سقوف_التصنيفات:S.cb,المحافظ:S.wallets.map(w=>({n:w.n,b:w.b})),حركات_حديثة:S.tx.slice(0,40),دروس:S.lessons,مهام_مفتوحة:S.tasks.filter(t=>!t.done),اختبارات:S.exams,درجات:S.grades,مذاكرة:S.focus.slice(-40),عادات:S.habits.map(h=>({n:h.n,أيام_آخر_30:hdays(h)})),أهداف_ادخار:S.goals,ديون:S.debts,متكررة:S.rec,اليوم:day0()};
  const hist=CH.slice(-7).map(x=>(x.r=='u'?'المستخدم: ':'المساعد: ')+x.t).join('\n');
  try{
   const r=await SM('أنت مساعد شخصي داخل تطبيق حياة المستخدم. أجب بالعربية بإيجاز وبنقاط عملية قصيرة، واعتمد على البيانات التالية فقط دون اختلاق أرقام، وإن نقصت البيانات فاطلب من المستخدم إضافتها.\nالبيانات: '+JSON.stringify(ctx)+'\nالمحادثة:\n'+hist+'\nالمساعد:',{cache:false});
@@ -344,7 +352,6 @@ const EN=`الرئيسية|Home
 نهاري|Light
 ليلي|Dark
 تصدير نسخة احتياطية|Export backup
-backup
 استيراد نسخة|Import backup
 حذف كل بياناتي|Delete all my data
 وضع محلي: بياناتك محفوظة على هذا الجهاز فقط.|Local mode: your data is stored on this device only.
@@ -354,8 +361,29 @@ backup
 سيتم حذف كل بياناتك نهائيًا. هل أنت متأكد؟|All your data will be deleted permanently. Are you sure?
 سيتم استبدال بياناتك الحالية بالنسخة المستوردة. متابعة؟|Your current data will be replaced by the imported backup. Continue?
 ملف غير صالح.|Invalid file.
-حذف هذا العنصر؟|Delete this item?`.split('\n').map(l=>l.split('|')),M=new Map(EN);
-const RX=[[/^أهلًا (.+)$/,'Hello $1'],[/^دروس اليوم \((.+)\)$/,"Today's classes ($1)"],[/^من ميزانية (.+)$/,'of a budget of $1'],[/^المعدل العام: (.+)$/,'Overall average: $1'],[/^صرفت (.+) من (.+)$/,'Spent $1 of $2'],[/^(\d+) يوم$/,'$1 days'],[/^(\d+) دقيقة$/,'$1 min'],[/^(\d+) يوم متتالٍ · (\d+)% خلال 30 يومًا$/,'$1-day streak · $2% over 30 days'],[/^(تجاوزت|اقتربت من) سقف (.+)$/,(m,a,c)=>(a=='تجاوزت'?'Over the ':'Close to the ')+c+' limit'],[/^نقل من (.+) إلى (.+)$/,'Transfer from $1 to $2']];
+حذف هذا العنصر؟|Delete this item?
+تعديل|Edit
+حذف الحركة وإرجاع أثرها على الرصيد؟|Delete this transaction and reverse its effect on the balance?
+المبلغ الجديد|New amount
+عرض المزيد|Show more
+تطور الرصيد (30 يومًا)|Balance over 30 days
+حركات شهرية متكررة|Monthly recurring transactions
+التصنيف (إيجار، اشتراك...)|Category (rent, subscription...)
+يوم الشهر (1-28)|Day of month (1-28)
+لا حركات متكررة.|No recurring transactions.
+متكرر|Recurring
+دفتر الديون|Debt ledger
+الاسم|Name
+ملاحظة|Note
+لي عليه|Owes me
+عليّ له|I owe
+لي عندهم:|Owed to me:
+عليّ لهم:|I owe:
+الوزن (اختياري)|Weight (optional)
+هدف أسبوعي (أيام)|Weekly goal (days)
+وسم (اختياري)|Tag (optional)
+المساعد|Assistant`.split('\n').map(l=>l.split('|')),M=new Map(EN);
+const RX=[[/^يوم (\d+)$/,'Day $1'],[/^هذا الأسبوع: (.+)$/,'This week: $1'],[/^أهلًا (.+)$/,'Hello $1'],[/^دروس اليوم \((.+)\)$/,"Today's classes ($1)"],[/^من ميزانية (.+)$/,'of a budget of $1'],[/^المعدل العام: (.+)$/,'Overall average: $1'],[/^صرفت (.+) من (.+)$/,'Spent $1 of $2'],[/^(\d+) يوم$/,'$1 days'],[/^(\d+) دقيقة$/,'$1 min'],[/^(\d+) يوم متتالٍ · (\d+)% خلال 30 يومًا$/,'$1-day streak · $2% over 30 days'],[/^(تجاوزت|اقتربت من) سقف (.+)$/,(m,a,c)=>(a=='تجاوزت'?'Over the ':'Close to the ')+c+' limit'],[/^نقل من (.+) إلى (.+)$/,'Transfer from $1 to $2']];
 const PK='masahati-prefs';let PR={theme:'auto',lang:'ar'};
 try{Object.assign(PR,JSON.parse(localStorage.getItem(PK)||'{}'))}catch(e){}
 const mq=matchMedia('(prefers-color-scheme: light)');
@@ -383,12 +411,12 @@ document.addEventListener('change',e=>{
  f.text().then(t=>{try{const o=JSON.parse(t);if(!o||!Array.isArray(o.wallets))throw 0;if(confirm(T('سيتم استبدال بياناتك الحالية بالنسخة المستوردة. متابعة؟'))){S={...D,...o};save();render()}}catch(x){alert(T('ملف غير صالح.'))}});
 });
 
-const IC={menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',home:'<path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/>',study:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19a2 2 0 0 0 2 2h13"/>',money:'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/>',habits:'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',notes:'<path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h7"/>',chev:'<path d="M9 6l6 6-6 6"/>',moon:'<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'};
+const IC={ai:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/>',menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',home:'<path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/>',study:'<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19a2 2 0 0 0 2 2h13"/>',money:'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/>',habits:'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',notes:'<path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h7"/>',chev:'<path d="M9 6l6 6-6 6"/>',moon:'<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',settings:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'};
 const ic=(k,z=24)=>`<svg viewBox="0 0 24 24" width="${z}" height="${z}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]}</svg>`;
 function drawerHtml(){
  const u=window.U,nm=u?(u.displayName||u.email):'مساحتي',av=u&&u.photoURL?`<img src="${esc(u.photoURL)}" alt="" referrerpolicy="no-referrer">`:`<span>${esc((nm||'؟')[0].toUpperCase())}</span>`;
  const it=(k,l)=>`<button class="di ${k==V?'on':''}" data-v="${k}">${ic(k)}<span>${l}</span></button>`;
- return `<button class="dh" data-v="settings"><div class="av">${av}</div><div class="dn"><b>${esc(nm)}</b>${u?`<small>${esc(u.email)}</small>`:''}</div><span class="chev">${ic('chev',20)}</span></button><hr>`+['home','study','money','habits','notes'].map(k=>it(k,VS[k][0])).join('')+`<div class="sp"></div><hr><div class="df">${it('settings',VS.settings[0])}<button class="ib" data-dr="theme" aria-label="تغيير المظهر">${ic(document.documentElement.dataset.theme=='light'?'moon':'sun')}</button></div>`;
+ return `<button class="dh" data-v="settings"><div class="av">${av}</div><div class="dn"><b>${esc(nm)}</b>${u?`<small>${esc(u.email)}</small>`:''}</div><span class="chev">${ic('chev',20)}</span></button><hr>`+['home','study','money','habits','notes'].concat(VS.ai?['ai']:[]).map(k=>it(k,VS[k][0])).join('')+`<div class="sp"></div><hr><div class="df">${it('settings',VS.settings[0])}<button class="ib" data-dr="theme" aria-label="تغيير المظهر">${ic(document.documentElement.dataset.theme=='light'?'moon':'sun')}</button></div>`;
 }
 const barAv=()=>window.U&&window.U.photoURL?`<img src="${esc(window.U.photoURL)}" alt="" referrerpolicy="no-referrer">`:ic('settings');
 const openDr=()=>{document.body.classList.add('dro');$('#drawer').setAttribute('aria-hidden','false')};
@@ -399,7 +427,30 @@ document.addEventListener('click',e=>{
  else if(a=='theme'){PR.theme=document.documentElement.dataset.theme=='light'?'dark':'light';try{localStorage.setItem(PK,JSON.stringify(PR))}catch(x){}applyPrefs();$('#drawer').innerHTML=drawerHtml();applyLang($('#drawer'));if(V=='settings')render()}
 });
 document.addEventListener('keydown',e=>{if(e.key=='Escape')closeDr()});
+
+let TXN=10;
+function applyRec(){const m=day0().slice(0,7),dd=new Date().getDate();let ch=0;S.rec.forEach(r=>{if(r.last==m||dd<r.d)return;const w=S.wallets.find(x=>x.id==r.w);if(!w)return;w.b+=r.k=='out'?-r.a:r.a;S.tx.unshift({id:id(),d:day0(),w:w.id,k:r.k,a:r.a,c:r.c||'متكرر'});r.last=m;ch=1});if(ch)save()}
+function txList(){
+ const wn=i=>(S.wallets.find(w=>w.id==i)||{n:'محفظة محذوفة'}).n,ab=t=>`<button class="x" data-act="etx" data-id="${t.id}" aria-label="تعديل">✎</button><button class="x" data-act="dtx" data-id="${t.id}" aria-label="حذف">×</button>`;
+ return sec('آخر الحركات',S.tx.length?S.tx.slice(0,TXN).map(t=>t.k=='tr'?`<div class="li"><span>نقل من ${esc(wn(t.w))} إلى ${esc(wn(t.to))}</span><span class="mu">${t.d}</span><b>${fm(t.a)}</b>${ab(t)}</div>`:`<div class="li"><span>${esc(t.c||(t.k=='in'?'دخل':'مصروف'))} <small class="mu">${esc(wn(t.w))}</small></span><span class="mu">${t.d}</span><b class="${t.k}">${t.k=='in'?'+':'−'}${fm(t.a)}</b>${ab(t)}</div>`).join('')+(S.tx.length>TXN?'<button class="btn alt" data-act="more">عرض المزيد</button>':''):emp('لا حركات مسجلة.'));
+}
+function chartSec(){
+ if(!S.wallets.length)return '';
+ const tot=S.wallets.reduce((a,w)=>a+w.b,0),days=[...Array(30).keys()].reverse().map(ago),eff=t=>t.k=='in'?t.a:t.k=='out'?-t.a:0;
+ const v=days.map(d=>tot-S.tx.filter(t=>t.d>d).reduce((a,t)=>a+eff(t),0)),mn=Math.min(...v),r=(Math.max(...v)-mn)||1;
+ const pts=v.map((y,i)=>`${(i/29*300).toFixed(1)},${(110-(y-mn)/r*100).toFixed(1)}`).join(' ');
+ return sec('تطور الرصيد (30 يومًا)',`<svg viewBox="0 0 300 120" class="ch" role="img" aria-label="${fm(v[0])} → ${fm(v[29])}"><polyline points="${pts}" fill="none" stroke="var(--ac)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/></svg><p class="mu">${fm(v[0])} ← ${fm(v[29])}</p>`);
+}
+function recSec(){
+ const o=ops();
+ return sec('حركات شهرية متكررة',(S.wallets.length?`<div class="f row"><select name="w">${o}</select><select name="k"><option value="out">مصروف</option><option value="in">دخل</option></select>${inp('a','المبلغ','number')}${inp('c','التصنيف (إيجار، اشتراك...)')}${inp('d','يوم الشهر (1-28)','number')}${btn('rec','إضافة')}</div>`:'')+(S.rec.length?S.rec.map(r=>`<div class="li"><span>${esc(r.c||'متكرر')} <small class="mu">${esc((S.wallets.find(w=>w.id==r.w)||{n:''}).n)}</small></span><span class="mu">${'يوم '+r.d}</span><b class="${r.k}">${fm(r.a)}</b>${del('rec',r.id)}</div>`).join(''):emp('لا حركات متكررة.')));
+}
+function debtSec(){
+ const a=S.debts.filter(d=>!d.paid),sm=k=>a.filter(d=>d.dir==k).reduce((s,d)=>s+d.a,0);
+ return sec('دفتر الديون',`<div class="f row">${inp('who','الاسم')}${inp('a','المبلغ','number')}<select name="dir"><option value="due">لي عليه</option><option value="owe">عليّ له</option></select>${inp('note','ملاحظة')}${btn('debt','إضافة')}</div><p class="mu"><span>لي عندهم:</span> <b class="in">${fm(sm('due'))}</b> · <span>عليّ لهم:</span> <b class="out">${fm(sm('owe'))}</b></p>`+S.debts.map(d=>`<div class="li ${d.paid?'dn':''}"><button class="ck" data-act="dp" data-id="${d.id}" aria-label="تبديل الإنجاز">${d.paid?'✓':''}</button><span>${esc(d.who)} <small class="mu">${d.dir=='due'?'لي عليه':'عليّ له'}${d.note?' · '+esc(d.note):''}</small></span><b class="${d.dir=='due'?'in':'out'}">${fm(d.a)}</b>${del('debts',d.id)}</div>`).join(''));
+}
 const VS={home:['الرئيسية',home,'home'],study:['الدراسة',study,'study'],money:['المال',money,'money'],habits:['العادات',habits,'habits'],notes:['الملاحظات',notes,'notes'],settings:['الإعدادات',settings,'settings']};
+if(AI_URL)VS.ai=['المساعد',ai,'ai'];
 let V='home';
 function render(){
  $('#nav').innerHTML=Object.entries(VS).filter(([k])=>k!='settings').map(([k,[l,,i]])=>`<button data-v="${k}" class="${k==V?'on':''}"><span class="ic">${ic(i)}</span>${l}</button>`).join('');
@@ -415,8 +466,8 @@ document.addEventListener('click',e=>{
  const v=e.target.closest('[data-v]');
  if(v){V=v.dataset.v;closeDr();render();const m=$('#main');m.classList.remove('sw');void m.offsetWidth;m.classList.add('sw');scrollTo({top:0})}
 });
-window.setS=d=>{S={...D,...d};render()};window.getS=()=>S;
-render();applyLang(document.getElementById('login'));applyLang($('#bar'));
+window.setS=d=>{S={...D,...d};applyRec();render()};window.getS=()=>S;
+applyRec();render();applyLang(document.getElementById('login'));applyLang($('#bar'));
 </script>
 <script type="module">
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
